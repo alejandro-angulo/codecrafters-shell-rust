@@ -14,6 +14,19 @@ fn main() {
 
         // Remove trailing newline
         input.pop();
-        println!("{}: command not found", input);
+        let parts: Vec<&str> = input.split(" ").filter(|s| !s.is_empty()).collect();
+        match parts.first() {
+            None => {
+                continue;
+            }
+            Some(command) => match command {
+                &"exit" => {
+                    break;
+                }
+                _ => {
+                    println!("{}: command not found", command);
+                }
+            },
+        }
     }
 }
