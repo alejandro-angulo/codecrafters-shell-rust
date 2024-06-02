@@ -23,6 +23,9 @@ fn main() {
                 &"exit" => {
                     break;
                 }
+                &"echo" => {
+                    println!("{}", parts[1..].join(" "));
+                }
                 _ => {
                     println!("{}: command not found", command);
                 }
