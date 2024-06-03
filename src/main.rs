@@ -1,11 +1,10 @@
-use anyhow::Context;
 use std::env;
 use std::fs::read_dir;
 use std::io::{self, Write};
 use std::path::Path;
 use std::path::PathBuf;
+use std::process::exit;
 use std::process::Command;
-use std::process::ExitCode;
 #[allow(unused_imports)]
 use std::str::FromStr;
 
@@ -29,7 +28,7 @@ impl FromStr for Builtins {
     }
 }
 
-fn main() -> ExitCode {
+fn main() {
     loop {
         // Uncomment this block to pass the first stage
         print!("$ ");
@@ -42,15 +41,18 @@ fn main() -> ExitCode {
 
         // Remove trailing newline
         input.pop();
-        let parts: Vec<&str> = input.split(" ").filter(|s| !s.is_empty()).collect();
+        let parts: Vec<&str> = input.split(' ').filter(|s| !s.is_empty()).collect();
         match parts.first() {
             None => {
                 continue;
             }
             Some(command) => match Builtins::from_str(command) {
                 Ok(command) => match command {
-                    // TODO: Implement custom exit codes for exit
-                    Builtins::Exit => break,
+                    Builtins::Exit => {
+                        if let Some(status_code) = die(&parts[1..]) {
+                            exit(status_code)
+                        }
+                    }
                     Builtins::Echo => println!("{}", parts[1..].join(" ")),
                     Builtins::Type => println!("{}", type_builtin(parts[1])),
                 },
