@@ -1,3 +1,6 @@
+use anyhow::Context;
+use std::env;
+use std::fs::read_dir;
 use std::io::{self, Write};
 #[allow(unused_imports)]
 use std::str::FromStr;
@@ -57,6 +60,20 @@ fn main() {
 fn type_builtin(command: &str) -> String {
     match Builtins::from_str(command) {
         Ok(_) => format!("{} is a shell builtin", command),
-        Err(_) => format!("{} not found", command),
+        Err(_) => {
+            let path = env::var("PATH").unwrap_or_default();
+            for directory in path.split(":") {
+                for entry in read_dir(directory)
+                    .context(format!("Failed to read from {}", directory))
+                    .unwrap()
+                {
+                    let entry = entry.unwrap();
+                    if entry.file_name() == command {
+                        return format!("{:?}", entry.path());
+                    }
+                }
+            }
+            format!("{} not found", command)
+        }
     }
 }
