@@ -2,6 +2,9 @@ use anyhow::Context;
 use std::env;
 use std::fs::read_dir;
 use std::io::{self, Write};
+use std::path::PathBuf;
+use std::process::Command;
+use std::process::ExitCode;
 #[allow(unused_imports)]
 use std::str::FromStr;
 
@@ -25,7 +28,7 @@ impl FromStr for Builtins {
     }
 }
 
-fn main() {
+fn main() -> ExitCode {
     loop {
         // Uncomment this block to pass the first stage
         print!("$ ");
@@ -45,33 +48,54 @@ fn main() {
             }
             Some(command) => match Builtins::from_str(command) {
                 Ok(command) => match command {
+                    // TODO: Implement custom exit codes for exit
                     Builtins::Exit => break,
                     Builtins::Echo => println!("{}", parts[1..].join(" ")),
                     Builtins::Type => println!("{}", type_builtin(parts[1])),
                 },
                 Err(_) => {
-                    println!("{}: command not found", command);
+                    let path = find_in_path(command);
+                    if path.is_some() {
+                        let path = path.unwrap();
+                        Command::new(path)
+                            .args(&parts[1..])
+                            .status()
+                            .expect("Failed to execute process");
+                    } else {
+                        println!("{}: command not found", command);
+                    }
                 }
             },
         }
     }
+
+    ExitCode::from(0)
+}
+
+fn find_in_path(command: &str) -> Option<PathBuf> {
+    let path = env::var("PATH").unwrap_or_default();
+    for directory in path.split(":") {
+        for entry in read_dir(directory)
+            .context(format!("Failed to read from {}", directory))
+            .unwrap()
+        {
+            let entry = entry.unwrap();
+            if entry.file_name() == command {
+                return Some(entry.path());
+            }
+        }
+    }
+    None
 }
 
 fn type_builtin(command: &str) -> String {
     match Builtins::from_str(command) {
         Ok(_) => format!("{} is a shell builtin", command),
         Err(_) => {
-            let path = env::var("PATH").unwrap_or_default();
-            for directory in path.split(":") {
-                for entry in read_dir(directory)
-                    .context(format!("Failed to read from {}", directory))
-                    .unwrap()
-                {
-                    let entry = entry.unwrap();
-                    if entry.file_name() == command {
-                        return format!("{} is {}", command, entry.path().display());
-                    }
-                }
+            let path = find_in_path(command);
+            if path.is_some() {
+                let path = path.unwrap();
+                return format!("{} is {}", command, path.display());
             }
             format!("{} not found", command)
         }
