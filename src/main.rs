@@ -75,17 +75,29 @@ fn main() {
             },
         }
     }
+}
 
-    ExitCode::from(0)
+fn die(arguments: &[&str]) -> Option<i32> {
+    if arguments.len() > 1 {
+        eprintln!("exit: too many arguments");
+        return None;
+    }
+    let mut status_code: i32 = 0;
+    if arguments.len() == 1 {
+        status_code = arguments[0].parse::<i32>().unwrap();
+    }
+    Some(status_code)
 }
 
 fn find_in_path(command: &str) -> Option<PathBuf> {
     let path = env::var("PATH").unwrap_or_default();
-    for directory in path.split(":") {
-        for entry in read_dir(directory)
-            .context(format!("Failed to read from {}", directory))
-            .unwrap()
-        {
+    for directory in path.split(':') {
+        let entries = read_dir(directory);
+        if entries.is_err() {
+            // TODO: Call this out somehow?
+            continue;
+        }
+        for entry in entries.unwrap() {
             let entry = entry.unwrap();
             if entry.file_name() == command {
                 return Some(entry.path());
