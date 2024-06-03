@@ -2,6 +2,7 @@ use anyhow::Context;
 use std::env;
 use std::fs::read_dir;
 use std::io::{self, Write};
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 use std::process::ExitCode;
@@ -54,10 +55,14 @@ fn main() -> ExitCode {
                     Builtins::Type => println!("{}", type_builtin(parts[1])),
                 },
                 Err(_) => {
-                    let path = find_in_path(command);
-                    if path.is_some() {
-                        let path = path.unwrap();
-                        Command::new(path)
+                    let executable_path = match Path::new(command).exists() {
+                        true => Some(PathBuf::from(command)),
+                        false => find_in_path(command),
+                    };
+
+                    if executable_path.is_some() {
+                        let executable_path = executable_path.unwrap();
+                        Command::new(executable_path)
                             .args(&parts[1..])
                             .status()
                             .expect("Failed to execute process");
