@@ -69,7 +69,7 @@ fn type_builtin(command: &str) -> String {
                 {
                     let entry = entry.unwrap();
                     if entry.file_name() == command {
-                        return format!("{:?}", entry.path());
+                        return format!("{} is {}", command, entry.path().display());
                     }
                 }
             }
