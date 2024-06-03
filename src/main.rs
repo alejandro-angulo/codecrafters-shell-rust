@@ -1,5 +1,26 @@
-#[allow(unused_imports)]
 use std::io::{self, Write};
+#[allow(unused_imports)]
+use std::str::FromStr;
+
+enum Builtins {
+    Exit,
+    Echo,
+    Type,
+}
+
+impl FromStr for Builtins {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Builtins, Self::Err> {
+        match input {
+            "exit" => Ok(Builtins::Exit),
+            "echo" => Ok(Builtins::Echo),
+            "type" => Ok(Builtins::Type),
+            // TODO: Is this the "right" thing to do for errors?
+            _ => Err(()),
+        }
+    }
+}
 
 fn main() {
     loop {
@@ -19,17 +40,23 @@ fn main() {
             None => {
                 continue;
             }
-            Some(command) => match command {
-                &"exit" => {
-                    break;
-                }
-                &"echo" => {
-                    println!("{}", parts[1..].join(" "));
-                }
-                _ => {
+            Some(command) => match Builtins::from_str(command) {
+                Ok(command) => match command {
+                    Builtins::Exit => break,
+                    Builtins::Echo => println!("{}", parts[1..].join(" ")),
+                    Builtins::Type => println!("{}", type_builtin(parts[1])),
+                },
+                Err(_) => {
                     println!("{}: command not found", command);
                 }
             },
         }
+    }
+}
+
+fn type_builtin(command: &str) -> String {
+    match Builtins::from_str(command) {
+        Ok(_) => format!("{} is a shell builtin", command),
+        Err(_) => format!("{} not found", command),
     }
 }
