@@ -59,7 +59,7 @@ fn main() {
                 Err(_) => {
                     let executable_path = match Path::new(command).exists() {
                         true => Some(PathBuf::from(command)),
-                        false => find_in_path(command),
+                        false => find_executable(command),
                     };
 
                     if executable_path.is_some() {
@@ -89,7 +89,7 @@ fn die(arguments: &[&str]) -> Option<i32> {
     Some(status_code)
 }
 
-fn find_in_path(command: &str) -> Option<PathBuf> {
+fn find_executable(command: &str) -> Option<PathBuf> {
     let path = env::var("PATH").unwrap_or_default();
     for directory in path.split(':') {
         let entries = read_dir(directory);
@@ -111,7 +111,7 @@ fn type_builtin(command: &str) -> String {
     match Builtins::from_str(command) {
         Ok(_) => format!("{} is a shell builtin", command),
         Err(_) => {
-            let path = find_in_path(command);
+            let path = find_executable(command);
             if path.is_some() {
                 let path = path.unwrap();
                 return format!("{} is {}", command, path.display());
