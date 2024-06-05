@@ -1,4 +1,5 @@
 use std::env;
+use std::env::current_dir;
 use std::fs::read_dir;
 use std::io::{self, Write};
 use std::path::Path;
@@ -12,6 +13,7 @@ enum Builtins {
     Exit,
     Echo,
     Type,
+    Pwd,
 }
 
 impl FromStr for Builtins {
@@ -22,6 +24,7 @@ impl FromStr for Builtins {
             "exit" => Ok(Builtins::Exit),
             "echo" => Ok(Builtins::Echo),
             "type" => Ok(Builtins::Type),
+            "pwd" => Ok(Builtins::Pwd),
             // TODO: Is this the "right" thing to do for errors?
             _ => Err(()),
         }
@@ -55,6 +58,7 @@ fn main() {
                     }
                     Builtins::Echo => println!("{}", parts[1..].join(" ")),
                     Builtins::Type => println!("{}", type_builtin(parts[1])),
+                    Builtins::Pwd => println!("{}", pwd()),
                 },
                 Err(_) => {
                     let executable_path = match Path::new(command).exists() {
@@ -119,4 +123,9 @@ fn type_builtin(command: &str) -> String {
             format!("{} not found", command)
         }
     }
+}
+
+fn pwd() -> String {
+    let current_dir = current_dir().unwrap();
+    current_dir.display().to_string()
 }
