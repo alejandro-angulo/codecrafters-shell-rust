@@ -1,13 +1,9 @@
 use std::io::{self, Write};
-use std::path::Path;
-use std::path::PathBuf;
-use std::process::Command;
-#[allow(unused_imports)]
 use std::str::FromStr;
 
 mod commands;
 use commands::die;
-use commands::find_executable;
+use commands::execute_command;
 use commands::pwd;
 use commands::type_builtin;
 use commands::Builtins;
@@ -37,22 +33,7 @@ fn main() {
                     Builtins::Type => println!("{}", type_builtin(parts[1])),
                     Builtins::Pwd => println!("{}", pwd()),
                 },
-                Err(_) => {
-                    let executable_path = match Path::new(command).exists() {
-                        true => Some(PathBuf::from(command)),
-                        false => find_executable(command),
-                    };
-
-                    if executable_path.is_some() {
-                        let executable_path = executable_path.unwrap();
-                        Command::new(executable_path)
-                            .args(&parts[1..])
-                            .status()
-                            .expect("Failed to execute process");
-                    } else {
-                        println!("{}: command not found", command);
-                    }
-                }
+                Err(_) => execute_command(parts),
             },
         }
     }

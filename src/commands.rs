@@ -1,8 +1,10 @@
 use std::env;
 use std::env::current_dir;
 use std::fs::read_dir;
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::exit;
+use std::process::Command;
 use std::str::FromStr;
 
 pub enum Builtins {
@@ -38,7 +40,7 @@ pub fn die(arguments: &[&str]) {
     exit(status_code);
 }
 
-pub fn find_executable(command: &str) -> Option<PathBuf> {
+fn find_executable(command: &str) -> Option<PathBuf> {
     let path = env::var("PATH").unwrap_or_default();
     for directory in path.split(':') {
         let entries = read_dir(directory);
@@ -72,4 +74,27 @@ pub fn type_builtin(command: &str) -> String {
 pub fn pwd() -> String {
     let current_dir = current_dir().unwrap();
     current_dir.display().to_string()
+}
+
+pub fn execute_command(input: Vec<&str>) {
+    let command = input.first();
+    if command.is_none() {
+        return;
+    }
+
+    let command = command.unwrap();
+    let executable_path = match Path::new(command).exists() {
+        true => Some(PathBuf::from(command)),
+        false => find_executable(command),
+    };
+
+    if executable_path.is_some() {
+        let executable_path = executable_path.unwrap();
+        Command::new(executable_path)
+            .args(&input[1..])
+            .status()
+            .expect("Failed to execute process");
+    } else {
+        println!("{}: command not found", command);
+    }
 }
