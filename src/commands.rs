@@ -80,8 +80,10 @@ pub fn pwd() -> String {
 
 pub fn cwd(input: Vec<&str>) {
     let arg = input.get(1).unwrap_or(&"~");
-    if env::set_current_dir(arg).is_err() {
-        println!("cd: {}: No such file or directory", arg);
+    let home = env::var("HOME").unwrap_or_default();
+    let path = if arg == &"~" { home.as_str() } else { arg };
+    if env::set_current_dir(path).is_err() {
+        println!("cd: {}: No such file or directory", path);
     }
 }
 
