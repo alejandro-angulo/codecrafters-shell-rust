@@ -2,6 +2,7 @@ use std::io::{self, Write};
 use std::str::FromStr;
 
 mod commands;
+use commands::cwd;
 use commands::die;
 use commands::execute_command;
 use commands::pwd;
@@ -32,6 +33,7 @@ fn main() {
                     Builtins::Echo => println!("{}", parts[1..].join(" ")),
                     Builtins::Type => println!("{}", type_builtin(parts[1])),
                     Builtins::Pwd => println!("{}", pwd()),
+                    Builtins::Cwd => cwd(parts),
                 },
                 Err(_) => execute_command(parts),
             },

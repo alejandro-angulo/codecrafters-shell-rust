@@ -12,6 +12,7 @@ pub enum Builtins {
     Echo,
     Type,
     Pwd,
+    Cwd,
 }
 
 impl FromStr for Builtins {
@@ -23,6 +24,7 @@ impl FromStr for Builtins {
             "echo" => Ok(Builtins::Echo),
             "type" => Ok(Builtins::Type),
             "pwd" => Ok(Builtins::Pwd),
+            "cd" => Ok(Builtins::Cwd),
             // TODO: Is this the "right" thing to do for errors?
             _ => Err(()),
         }
@@ -74,6 +76,13 @@ pub fn type_builtin(command: &str) -> String {
 pub fn pwd() -> String {
     let current_dir = current_dir().unwrap();
     current_dir.display().to_string()
+}
+
+pub fn cwd(input: Vec<&str>) {
+    let arg = input.get(1).unwrap_or(&"~");
+    if env::set_current_dir(arg).is_err() {
+        println!("cd: {}: No such file or directory", arg);
+    }
 }
 
 pub fn execute_command(input: Vec<&str>) {
